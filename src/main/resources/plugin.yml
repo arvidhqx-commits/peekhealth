@@ -1,0 +1,14 @@
+name: PeekHealth
+version: '${version}'
+main: dev.peekhealth.PeekHealthPlugin
+api-version: '1.21'
+description: Shows the health of the mob or player you look at or attack in your action bar.
+commands:
+  peekhealth:
+    description: Toggle or reload PeekHealth
+    aliases: [ph]
+permissions:
+  peekhealth.use:
+    default: true
+  peekhealth.reload:
+    default: op

@@ -1,0 +1,19 @@
+# PeekHealth configuration
+# mode: LOOK (crosshair), DAMAGE (on hit), BOTH
+mode: BOTH
+# Max distance for crosshair detection (blocks)
+look-range: 20
+# Seconds the bar stays visible after the last look/hit
+display-seconds: 3
+# Format. Placeholders: {name} {health} {max} {percent} {hearts}
+# Accepts MiniMessage (<red>...) and legacy & codes.
+format: '<white>{name}</white> <red>{hearts}</red> <gray>{health}/{max}</gray>'
+# Hearts bar symbols and length
+hearts-length: 10
+heart-full: '❤'
+heart-empty: '♡'
+# Entity types never shown (names from the Bukkit EntityType enum)
+blacklist:
+  - ARMOR_STAND
+# Worlds where PeekHealth is disabled
+disabled-worlds: []
