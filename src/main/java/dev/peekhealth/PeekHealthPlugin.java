@@ -145,10 +145,29 @@ public final class PeekHealthPlugin extends JavaPlugin implements Listener {
         return null;
     }
 
+    /**
+     * Attribute.MAX_HEALTH only exists from Paper 1.21.3 onwards; older 1.21.x builds
+     * expose GENERIC_MAX_HEALTH instead. The long-deprecated getMaxHealth() works on all
+     * of them, so it serves as the fallback.
+     */
+    @SuppressWarnings("deprecation")
+    private double maxHealthOf(LivingEntity living, double fallback) {
+        try {
+            var attribute = living.getAttribute(Attribute.MAX_HEALTH);
+            if (attribute != null) return attribute.getValue();
+        } catch (Throwable ignored) {
+            // Attribute constant missing on this server version.
+        }
+        try {
+            return living.getMaxHealth();
+        } catch (Throwable ignored) {
+            return fallback;
+        }
+    }
+
     private Component render(LivingEntity living) {
         double health = Math.max(0, living.getHealth());
-        double max = living.getAttribute(Attribute.MAX_HEALTH) != null
-                ? living.getAttribute(Attribute.MAX_HEALTH).getValue() : health;
+        double max = maxHealthOf(living, health);
         int filled = max <= 0 ? 0 : (int) Math.round(health / max * heartsLength);
         filled = Math.min(heartsLength, Math.max(health > 0 ? 1 : 0, filled));
         String hearts = heartFull.repeat(filled) + heartEmpty.repeat(heartsLength - filled);
