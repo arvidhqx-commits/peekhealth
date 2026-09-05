@@ -67,7 +67,7 @@ public final class PeekHealthPlugin extends JavaPlugin implements Listener {
         displayMillis = Math.max(500, (long) (getConfig().getDouble("display-seconds", 3) * 1000));
         format = getConfig().getString("format",
                 "<white>{name}</white> <red>{hearts}</red> <gray>{health}/{max}</gray>");
-        heartsLength = Math.max(1, getConfig().getInt("hearts-length", 10));
+        heartsLength = Math.min(64, Math.max(1, getConfig().getInt("hearts-length", 10)));
         heartFull = getConfig().getString("heart-full", "❤");
         heartEmpty = getConfig().getString("heart-empty", "♡");
         blacklist.clear();
@@ -165,24 +165,32 @@ public final class PeekHealthPlugin extends JavaPlugin implements Listener {
         }
     }
 
+    /**
+     * Baut die Aktionsleisten-Zeile. Wichtig: Der Anzeigename eines Mobs ist FREMDER
+     * Text -- ein Spieler schreibt ihn mit einem Namensschild. Frueher wurde er als
+     * Zeichenkette in die Vorlage eingesetzt und erst danach geparst; ein Mob namens
+     * "&cBoss" hat damit die ganze Zeile auf Legacy umgeschaltet, sodass die Vorlage
+     * selbst als Text erschien ("<white>Boss</white> ..."). Deshalb wird jetzt zuerst
+     * die Vorlage geparst (die stammt vom Serverbetreiber) und die Werte werden als
+     * fertige Komponenten eingesetzt -- fremder Text kann nicht mehr formatieren.
+     */
     private Component render(LivingEntity living) {
         double health = Math.max(0, living.getHealth());
         double max = maxHealthOf(living, health);
         int filled = max <= 0 ? 0 : (int) Math.round(health / max * heartsLength);
         filled = Math.min(heartsLength, Math.max(health > 0 ? 1 : 0, filled));
-        String hearts = heartFull.repeat(filled) + heartEmpty.repeat(heartsLength - filled);
-        String name = living instanceof Player p ? p.getName()
-                : living.customName() != null
-                        ? net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
-                                .serialize(living.customName())
-                        : formatType(living.getType().name());
-        String line = format
-                .replace("{name}", name)
-                .replace("{health}", trim(health))
-                .replace("{max}", trim(max))
-                .replace("{percent}", max <= 0 ? "0" : String.valueOf(Math.round(health / max * 100)))
-                .replace("{hearts}", hearts);
-        return Format.parse(line);
+        Component hearts = Format.parse(
+                heartFull.repeat(filled) + heartEmpty.repeat(heartsLength - filled));
+        Component name = living instanceof Player p ? Component.text(p.getName())
+                : living.customName() != null ? living.customName()
+                        : Component.text(formatType(living.getType().name()));
+        String percent = max <= 0 ? "0" : String.valueOf(Math.round(health / max * 100));
+        return Format.parse(format)
+                .replaceText(r -> r.matchLiteral("{name}").replacement(name))
+                .replaceText(r -> r.matchLiteral("{hearts}").replacement(hearts))
+                .replaceText(r -> r.matchLiteral("{health}").replacement(Component.text(trim(health))))
+                .replaceText(r -> r.matchLiteral("{max}").replacement(Component.text(trim(max))))
+                .replaceText(r -> r.matchLiteral("{percent}").replacement(Component.text(percent)));
     }
 
     private String formatType(String enumName) {
